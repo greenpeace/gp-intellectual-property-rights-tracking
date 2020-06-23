@@ -8,8 +8,18 @@ The bot will read a Firestore database to find the links to be used for scraping
 # Creating the Cloud Function
 Go to the Cloud Functions page of the Google Cloud Platform Console. Create a new function and give it a name that is meaningful.
 
-# Deploy
-gcloud functions deploy <cloud function name> --runtime python37 --set-env-vars PROJECT_NAME=<gcp_project_name> --trigger-http --allow-unauthenticated --region=europe-west1 --memory=128MB
+# How to deply
+Read the individual README.md file in the sub directory
 
-# You may have to alter the IAM if you can not gett the function to work
-gcloud functions add-iam-policy-binding <function name> --region=<region> --member=allUsers --role=roles/cloudfunctions.invoker
+# Technical Documentation
+You can read 
+
+The technical documentaiton - https://docs.google.com/document/d/1fSuS0o8UUY_VuMa1361BmhIbubQh1EWPtyVWK3-v4gI/edit?usp=sharing
+
+User Manual - https://docs.google.com/document/d/1We8rM7G9D1rLSnaZh5aykOUoYivDtRC1h_ZPdJ7RNok/edit?usp=sharing
+
+# Code Explanation in Colab Notebook
+
+https://colab.research.google.com/drive/1yDw8WsXj7E2x5Gn2880jLT871WjF3KDj?usp=sharing
+
+A Jupyter Notebook is provided for educational purposes.
