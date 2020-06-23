@@ -1,0 +1,7 @@
+.idea/
+venv/
+.DS_Store
+sphinx/
+**/*.pyc
+.vscode
+GeoLite2-Country_20200218/
