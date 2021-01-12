@@ -3,5 +3,5 @@ beautifulsoup4==4.8.2
 requests==2.22.0
 pytz==2019.3
 html5lib==1.0.1
+google=2.0.3
 tldextract==2.2.2
-lxml==4.6.2
