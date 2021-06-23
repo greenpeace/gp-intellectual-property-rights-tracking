@@ -1,6 +1,0 @@
-.idea/
-venv/
-.DS_Store
-sphinx/
-**/*.pyc
-.vscode
