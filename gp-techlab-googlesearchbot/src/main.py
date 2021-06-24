@@ -174,5 +174,3 @@ def convert(url):
     if not url.startswith('http://'):
         return 'http://' + url
     return url
-
-googlecloudbot_http('request')

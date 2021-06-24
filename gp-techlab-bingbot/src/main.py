@@ -22,7 +22,7 @@ firebase_admin.initialize_app(CREDENTIALS, {
 # get firestore client
 db = firestore.client()
 
-def bingbot_http(request):
+def main(request):
 
     # Fake Real Browser
     headers = { 'User-agent' : 'Mozilla/11.0' }
@@ -115,5 +115,4 @@ def bingbot_http(request):
     return "All Done"
 def _now():
     return datetime.utcnow().replace(tzinfo=pytz.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
-
-bingbot_http('request')
+    

@@ -246,8 +246,6 @@ resource "google_cloudfunctions_function" "teepublic" {
   }
 }
 
-
-
 resource "google_service_account" "function" {
   account_id   = "${local.app_name}-${var.entity}-${var.environment}"
   display_name = "IPR Function Account"
@@ -257,18 +255,6 @@ resource "google_service_account" "function" {
 resource "google_project_iam_member" "function_trace" {
   project = var.project
   role    = "roles/cloudtrace.agent"
-  member  = "serviceAccount:${google_service_account.function.email}"
-}
-
-resource "google_project_iam_member" "cloud_build" {
-  project = var.project
-  role    = "roles/cloudbuild.builds.builder"
-  member  = "serviceAccount:${google_service_account.function.email}"
-}
-
-resource "google_project_iam_member" "secret_manager" {
-  project = var.project
-  role    = "roles/secretmanager.admin"
   member  = "serviceAccount:${google_service_account.function.email}"
 }
 
