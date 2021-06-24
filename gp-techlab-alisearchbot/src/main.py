@@ -1,12 +1,8 @@
 import logging
-from datetime import datetime
 import requests
-import urllib.request
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-import pytz
 import re
-import os
 from lxml import html
 
 from config import PROJECT

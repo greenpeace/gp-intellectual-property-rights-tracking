@@ -1,7 +1,7 @@
 # This directory describes the release bucket
 
 locals {
-  app_name = "gpi-ipr"
+  app_name = "gpiipr"
   project  = "torbjorn-zetterlund"
 }
 

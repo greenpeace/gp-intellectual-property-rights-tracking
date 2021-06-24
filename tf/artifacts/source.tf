@@ -1,5 +1,5 @@
 locals {
-  app_name = "gpi-ipr"
+  app_name = "gpiipr"
 }
 
 resource "google_storage_bucket" "source" {
@@ -45,6 +45,55 @@ data "archive_file" "source_cafepress" {
   excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
 }
 
+data "archive_file" "source_duckduckgo" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../gp-techlab-duckduckgobot/src"
+  output_path = "${path.module}/../../gp-techlab-duckduckgobot/src/build/${local.app_name}_duckduckgo.zip"
+  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+}
+
+data "archive_file" "source_ebay" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../gp-techlab-ebaysearchbot/src"
+  output_path = "${path.module}/../../gp-techlab-ebaysearchbot/src/build/${local.app_name}_ebay.zip"
+  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+}
+
+data "archive_file" "source_etsy" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../gp-techlab-etsysearchbot/src"
+  output_path = "${path.module}/../../gp-techlab-etsysearch/src/build/${local.app_name}_etsy.zip"
+  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+}
+
+data "archive_file" "source_googlesearch" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../gp-techlab-googlesearchbot/src"
+  output_path = "${path.module}/../../gp-techlab-googlesearchbot/src/build/${local.app_name}_googlesearch.zip"
+  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+}
+
+data "archive_file" "source_redbubble" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../gp-techlab-redbubblesearchbot/src"
+  output_path = "${path.module}/../../gp-techlab-redbubblesearchbot/src/build/${local.app_name}_redbubble.zip"
+  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+}
+
+data "archive_file" "source_spreadshirt" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../gp-techlab-spreadshirt/src"
+  output_path = "${path.module}/../../gp-techlab-spreadshirt/src/build/${local.app_name}_spreadshirt.zip"
+  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+}
+
+data "archive_file" "source_teepublic" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../gp-techlab-teepublic/src"
+  output_path = "${path.module}/../../gp-techlab-teepublic/src/build/${local.app_name}_teepublic.zip"
+  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+}
+
 resource "google_storage_bucket_object" "source_ali" {
   name   = "${local.app_name}-testing-${data.archive_file.source_ali.output_md5}_ali.zip"
   bucket = google_storage_bucket.source.name
@@ -67,4 +116,45 @@ resource "google_storage_bucket_object" "source_cafepress" {
   name   = "${local.app_name}-testing-${data.archive_file.source_cafepress.output_md5}_cafepress.zip"
   bucket = google_storage_bucket.source.name
   source = data.archive_file.source_cafepress.output_path
+}
+
+resource "google_storage_bucket_object" "source_duckduckgo" {
+  name   = "${local.app_name}-testing-${data.archive_file.source_duckduckgo.output_md5}_duckduckgo.zip"
+  bucket = google_storage_bucket.source.name
+  source = data.archive_file.source_duckduckgo.output_path
+}
+
+resource "google_storage_bucket_object" "source_ebay" {
+  name   = "${local.app_name}-testing-${data.archive_file.source_ebay.output_md5}_ebay.zip"
+  bucket = google_storage_bucket.source.name
+  source = data.archive_file.source_ebay.output_path
+}
+resource "google_storage_bucket_object" "source_etsy" {
+  name   = "${local.app_name}-testing-${data.archive_file.source_etsy.output_md5}_etsy.zip"
+  bucket = google_storage_bucket.source.name
+  source = data.archive_file.source_etsy.output_path
+}
+
+resource "google_storage_bucket_object" "source_googlesearch" {
+  name   = "${local.app_name}-testing-${data.archive_file.source_googlesearch.output_md5}_googlesearch.zip"
+  bucket = google_storage_bucket.source.name
+  source = data.archive_file.source_googlesearch.output_path
+}
+
+resource "google_storage_bucket_object" "source_redbubble" {
+  name   = "${local.app_name}-testing-${data.archive_file.source_redbubble.output_md5}_redbubble.zip"
+  bucket = google_storage_bucket.source.name
+  source = data.archive_file.source_redbubble.output_path
+}
+
+resource "google_storage_bucket_object" "source_spreadshirt" {
+  name   = "${local.app_name}-testing-${data.archive_file.source_spreadshirt.output_md5}_spreadshit.zip"
+  bucket = google_storage_bucket.source.name
+  source = data.archive_file.source_spreadshirt.output_path
+}
+
+resource "google_storage_bucket_object" "source_teepublic" {
+  name   = "${local.app_name}-testing-${data.archive_file.source_teepublic.output_md5}_teepublic.zip"
+  bucket = google_storage_bucket.source.name
+  source = data.archive_file.source_teepublic.output_path
 }

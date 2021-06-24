@@ -17,12 +17,8 @@ firebase_admin.initialize_app(CREDENTIALS, {
 # get firestore client
 db = firestore.client()
 
-# Keyword Array filled in by daya in Firestore
+# Keyword Check
 keywords = []
-
-# The url in cafepress product pages do not have the baseurl - setting it here 
-baseurl = 'https://cafepress.com'
-
 def main(request):
 
     # Fake Real Browser
@@ -30,25 +26,24 @@ def main(request):
 
     searchlink_ref = db.collection(u'searchlinks')
     
-    for doc in searchlink_ref.where(u'shop', u'==', 'cafepress').stream():
+    for doc in searchlink_ref.where(u'shop', u'==', 'ebay').stream():
         url = u'{}'.format(doc.to_dict()['url'])
         shop = u'{}'.format(doc.to_dict()['shop'])
-        #        url = cleanurl(url)
+        url = cleanurl(url)
         print(url)
 
         try:
             page = requests.get(url, headers=headers)
 
             # Get web page
-            ebaysoup = BeautifulSoup(page.content, "html5lib")
-            # Regular Expression for a css class that ha dynamic values
-            regex = re.compile('listing-item flex-item ptn-*')
-            # Get All links in the css class defined by regex
-            for divs in ebaysoup.find_all("a", class_=regex):
-                print(divs['href'])
-                item_url = divs['href']
+            ebaysoup = BeautifulSoup(page.text, "html5lib")
+   
+            for divs in ebaysoup.find_all("div", class_="s-item__image-section"):
+            
+                item_url = divs.find('a')
+                item_url = item_url['href']
                 item_url = cleanurl(item_url)
-                print(divs)
+
                 # Duplicate check
                 docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).stream()
                 if (len(list(docsurl))):
@@ -64,7 +59,8 @@ def main(request):
                     # Request data from Firestore
                     for doc in searchkeywords_ref.where(u'active', u'==', True).stream():
                         keywords.append(u'{}'.format(doc.to_dict()['querykeywords']))
-                        
+
+                    # Check if Keywords Exixst in Product title
                     if any(x in item_image_title for x in keywords):
                         item_image_url = divs.find('img')
                         try:
@@ -98,7 +94,8 @@ def main(request):
                             except:
                                 contact_seller = ''
 
-                            shop = 'Cafepress'
+                            shop = 'Ebay'
+
                             location = ''
 
                             data = {
@@ -119,30 +116,19 @@ def main(request):
                         logging.info("No match on Keywords")    # -> <match object>
         except:
             logging.info("Error Getting main product page")
+#    else:
+#        logging.info("Friendly Shop", url)
    
     return "All Done"
 
 def cleanurl(url):
     if "?hash" not in url:
-        return baseurl + url
+        return url
     matches = re.findall('(.+\?)([^#]*)(.*)', url)
     if len(matches) == 0:
-        return baseurl + url
+        return url
     match = matches[0]
     query = match[1]
 #    sanitized_query = '&'.join([p for p in query.split('&') if not p.startswith('?hash')])
 #    return match[0]+sanitized_query+match[2]
-    return baseurl + match[0]
-
-def convert(url):
-    if url.startswith('http://www.'):
-        return 'http://' + url[len('http://www.'):]
-    if url.startswith('//www.'):
-        return 'https://www' + url[len('//www'):]
-    if url.startswith('//image.'):
-        return 'https://' + url[len('//'):]
-    if url.startswith('www.'):
-        return 'https://' + url[len('www.'):]
-    if not url.startswith('http://'):
-        return 'http://' + url
-    return url
+    return match[0]

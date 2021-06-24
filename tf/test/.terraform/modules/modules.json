@@ -1,1 +1,1 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"artifacts","Source":"../artifacts/","Dir":"../artifacts"},{"Key":"example","Source":"../module/","Dir":"../module"}]}
+{"Modules":[{"Key":"example","Source":"../module/","Dir":"../module"},{"Key":"","Source":"","Dir":"."},{"Key":"artifacts","Source":"../artifacts/","Dir":"../artifacts"}]}

@@ -2,6 +2,6 @@ variable "path" {default = "/Users/tzetterl/Documents"}
 
 provider "google" {
     project = "torbjorn-zetterlund"
-    region  = "europe-west1"
-    credentials = "${file("${var.path}/GlobalLandD-c35aace9c93f.json")}"
+    region  = "us-central1"
+    #credentials = "${file("${var.path}/torbjorn-zetterlund-b1ef72b3b19b.json")}"
 }

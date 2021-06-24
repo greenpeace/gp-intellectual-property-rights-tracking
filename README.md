@@ -23,3 +23,8 @@ User Manual - https://docs.google.com/document/d/1We8rM7G9D1rLSnaZh5aykOUoYivDtR
 https://colab.research.google.com/drive/1yDw8WsXj7E2x5Gn2880jLT871WjF3KDj?usp=sharing
 
 A Jupyter Notebook is provided for educational purposes.
+
+# Checking Projects
+gcloud config configurations list
+
+gcloud config configurations activate [NAME]

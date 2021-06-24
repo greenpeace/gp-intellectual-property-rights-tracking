@@ -1,6 +1,6 @@
 locals {
   project     = "torbjorn-zetterlund"
-  entity      = "gpi-ipr"
+  entity      = "extract"
   environment = "dev"
 }
 
@@ -42,6 +42,13 @@ module "example" {
   source_archive_object_amazon = module.artifacts.source_object_amazon
   source_archive_object_bing = module.artifacts.source_object_bing
   source_archive_object_cafepress = module.artifacts.source_object_cafepress
+  source_archive_object_duckduckgo = module.artifacts.source_object_duckduckgo
+  source_archive_object_ebay = module.artifacts.source_object_ebay
+  source_archive_object_etsy = module.artifacts.source_object_etsy
+  source_archive_object_googlesearch = module.artifacts.source_object_googlesearch
+  source_archive_object_redbubble = module.artifacts.source_object_redbubble
+  source_archive_object_spreadshirt = module.artifacts.source_object_spreadshirt
+  source_archive_object_teepublic = module.artifacts.source_object_teepublic
 }
 
 resource "google_project_service" "enable-project-serviceusage-api-host" {

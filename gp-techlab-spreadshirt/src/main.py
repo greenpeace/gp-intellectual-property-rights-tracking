@@ -1,13 +1,12 @@
 import logging
 import requests
-from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import re
 
-from config import PROJECT
-
 import firebase_admin
 from firebase_admin import credentials, firestore
+
+from config import PROJECT
 
 # initialize firebase sdk
 CREDENTIALS = credentials.ApplicationDefault()
@@ -21,71 +20,70 @@ db = firestore.client()
 # Keyword Array filled in by daya in Firestore
 keywords = []
 
-# Set Default
-baseurl = ''
-
 def main(request):
+
+    # Fake Real Browser
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'}
 
     searchlink_ref = db.collection(u'searchlinks')
     
-    for doc in searchlink_ref.where(u'shop', u'==', 'amazon').stream():
+    for doc in searchlink_ref.where(u'shop', u'==', 'spreadshirt').stream():
         url = u'{}'.format(doc.to_dict()['url'])
         shop = u'{}'.format(doc.to_dict()['shop'])
+        #        url = cleanurl(url)
         print(url)
-        baseurl = urlparse(url).netloc
 
         try:
-
-            session = requests.Session()
-
-            headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'}
-            page = session.get(url, headers=headers)
-            page.raise_for_status()  # omit this if you dont want an exception on a non-200 response
+            page = requests.get(url, headers=headers)
 
             # Get web page
-            amazonsoup = BeautifulSoup(page.content, "html5lib")
-            # For debug purpose
-            #print(amazonsoup.prettify())
-            regex = re.compile('sg-col-4-of-24 sg-col-4-of-12 sg-col-4-of-36 s-result-item *')
+            spreadshirt = BeautifulSoup(page.content, "html5lib")
+            # Regular Expression for a css class that ha dynamic values
+            regex = re.compile('col-6 col-md-4')
+            regexid = re.compile('l-*')
             # Get All links in the css class defined by regex
-            for divs in amazonsoup.find_all('div', class_=regex):
-
-                item_url_data = divs.find('a')
-                item_url = item_url_data['href']
+            for divs in spreadshirt.find_all(id=regexid, class_=regex):
+                item_url = divs.find("a")  
+                item_url = item_url['href']
                 #item_url = cleanurl(item_url)
-                item_url = convert(item_url, baseurl)
+                item_url = convert(item_url)
+                #print(divs)
+                # Duplicate check
+                docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).stream()
+                if (len(list(docsurl))):
+                    logging.info("URL Exist, we will ignore")
+                else:
+                    logging.info("URL Not found, we will add to databse")
 
-                item_image_url = item_url_data.img['src']
+                    item_image_title = divs.find('img')
+                    item_image_title = item_image_title['alt']
 
-                item_image_data = divs.find('h2')                    
-                item_image_title = item_image_data.span.text
+                    # Check if Keywords Exixst in Product title
+                    searchkeywords_ref = db.collection(u'searchquerykeywords')        
+                    # Request data from Firestore
+                    for doc in searchkeywords_ref.where(u'active', u'==', True).stream():
+                        keywords.append(u'{}'.format(doc.to_dict()['querykeywords']))
+                        
+                    if any(x in item_image_title for x in keywords):
+                        try:
+                            item_image_url = divs.find('img')
+                            item_image_url = item_image_url['src']
+                        except:
+                            item_image_url = item_image_url['src']
 
-                # Check if Keywords Exixst in Product title
-                searchkeywords_ref = db.collection(u'searchquerykeywords')        
-                # Request data from Firestore
-                for doc in searchkeywords_ref.where(u'active', u'==', True).stream():
-                    keywords.append(u'{}'.format(doc.to_dict()['querykeywords']))
-                if any(x in item_image_title for x in keywords):
-                    # Duplicate check
-                    docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).stream()
-                    if (len(list(docsurl))):
-                        logging.info("URL Exist, we will ignore")
-                    else:
-                        logging.info("URL Not found, we will add to databse")
-
+                        item_image_url = convert(item_image_url)
                         # Get data from sub page
                         subpage = requests.get(item_url, headers=headers)
 
-                        ebayitemsoup = BeautifulSoup(subpage.text, "html5lib")
+                        spreadshirtsoup = BeautifulSoup(subpage.text, "html5lib")
 
-                        for subdivs in ebayitemsoup.find_all(id="titleBlock"):
+                        for subdivs in spreadshirtsoup.find_all("div", class_="detail-header__designer-link"):
 
                             sellerdetail = subdivs.find("a")    
                             #  for link in ebaysoup.find_all("a"):
                             try:
                                 store_url = sellerdetail['href']
-                                baseurl = urlparse(url).netloc
-                                store_url = convert(store_url, baseurl)
+                                store_url = convert(store_url)
                             except:
                                 store_url = ''
 
@@ -97,12 +95,11 @@ def main(request):
 
                             # Get data from shop page
                             try:
-                                contact_seller = ''
+                                contact_seller = subdivs.find('div', class_='si-pd-a').a['href']
                             except:
                                 contact_seller = ''
 
-                            # Get data from shop page
-                            shop = 'Amazon'
+                            shop = 'Spreadshirt'
                             location = ''
 
                             data = {
@@ -119,11 +116,11 @@ def main(request):
                                 'note': ''
                             }
                             db.collection('illegalmerchandise').document().set(data)  # Add a new doc in collection links with ID shop
-                else:
-                    logging.info("No match on Keywords")    # -> <match object>
+                    else:
+                        logging.info("No match on Keywords")    # -> <match object>
         except:
             logging.info("Error Getting main product page")
-
+   
     return "All Done"
 
 def cleanurl(url):
@@ -134,13 +131,11 @@ def cleanurl(url):
     query = match[1]
     return match[0]
 
-def convert(url, baseurl):
+def convert(url):
     if url.startswith('http://www.'):
         return 'http://' + url[len('http://www.'):]
-    if url.startswith('/'):
-        return 'https://' + baseurl + url
     if url.startswith('//www.'):
-        return 'https://www' + baseurl + url
+        return 'https://www' + url[len('//www'):]
     if url.startswith('//image.'):
         return 'https://' + url[len('//'):]
     if url.startswith('www.'):

@@ -1,12 +1,13 @@
 import logging
 import requests
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import re
 
-from config import PROJECT
-
 import firebase_admin
 from firebase_admin import credentials, firestore
+
+from config import PROJECT
 
 # initialize firebase sdk
 CREDENTIALS = credentials.ApplicationDefault()
@@ -20,35 +21,40 @@ db = firestore.client()
 # Keyword Array filled in by daya in Firestore
 keywords = []
 
-# The url in cafepress product pages do not have the baseurl - setting it here 
-baseurl = 'https://cafepress.com'
-
+filename = "teepublic.html"
 def main(request):
 
     # Fake Real Browser
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'}
+#    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'}
+    # Set headers
+    headers = requests.utils.default_headers()
+    headers.update({ 'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'})# Set headers
 
     searchlink_ref = db.collection(u'searchlinks')
     
-    for doc in searchlink_ref.where(u'shop', u'==', 'cafepress').stream():
+    for doc in searchlink_ref.where(u'shop', u'==', 'teepublic').stream():
         url = u'{}'.format(doc.to_dict()['url'])
         shop = u'{}'.format(doc.to_dict()['shop'])
-        #        url = cleanurl(url)
         print(url)
+        baseurl = urlparse(url).netloc
 
         try:
             page = requests.get(url, headers=headers)
-
             # Get web page
-            ebaysoup = BeautifulSoup(page.content, "html5lib")
+            teepublic_data = BeautifulSoup(page.content, "html.parser")
+            print(teepublic_data.prettify())
+            html_data = teepublic_data.prettify()
+            with open(filename, "a+") as file:
+                file.write(html_data)
             # Regular Expression for a css class that ha dynamic values
-            regex = re.compile('listing-item flex-item ptn-*')
+            regex = re.compile('greenpeace')
             # Get All links in the css class defined by regex
-            for divs in ebaysoup.find_all("a", class_=regex):
-                print(divs['href'])
-                item_url = divs['href']
-                item_url = cleanurl(item_url)
-                print(divs)
+            #title = amazonsoup.find(id="productTitle").get_text()
+            #price = amazonsoup.find(id="priceblock_ourprice").get_text()
+            for divs in teepublic_data.find_all('a').get('href'):
+                item_url = divs.find('a')  
+                item_url = item_url['href']
+                item_url = convert(item_url, baseurl)
                 # Duplicate check
                 docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).stream()
                 if (len(list(docsurl))):
@@ -56,8 +62,8 @@ def main(request):
                 else:
                     logging.info("URL Not found, we will add to databse")
 
-                    item_image_title = divs.find('img')
-                    item_image_title = item_image_title['alt']
+                    item_image_title = divs.find('h2', class_="m-tiles__title m-tiles__info")
+                    item_image_title = item_image_title.a.text
 
                     # Check if Keywords Exixst in Product title
                     searchkeywords_ref = db.collection(u'searchquerykeywords')        
@@ -66,40 +72,19 @@ def main(request):
                         keywords.append(u'{}'.format(doc.to_dict()['querykeywords']))
                         
                     if any(x in item_image_title for x in keywords):
-                        item_image_url = divs.find('img')
                         try:
-                            item_image_url = item_image_url['data-src']
+                            item_image_url = divs.find('img')
+                            item_image_url = item_image_url['src']
                         except:
                             item_image_url = item_image_url['src']
 
+                        item_image_url = convert(item_image_url)
                         # Get data from sub page
                         subpage = requests.get(item_url, headers=headers)
 
-                        ebayitemsoup = BeautifulSoup(subpage.text, "html5lib")
+                        spreadshirtsoup = BeautifulSoup(subpage.text, "html5lib")
 
-                        for subdivs in ebayitemsoup.find_all("div", class_="si-content"):
-
-                            sellerdetail = subdivs.find("a")    
-                            #  for link in ebaysoup.find_all("a"):
-                            try:
-                                store_url = sellerdetail['href']
-                            except:
-                                store_url = ''
-
-                            #  for link in ebaysoup.find_all("a"):
-                            try:
-                                seller = sellerdetail.span.text
-                            except:
-                                seller = ''
-
-                            # Get data from shop page
-                            try:
-                                contact_seller = subdivs.find('div', class_='si-pd-a').a['href']
-                            except:
-                                contact_seller = ''
-
-                            shop = 'Cafepress'
-                            location = ''
+                        for subdivs in spreadshirtsoup.find_all("div", class_="detail-header__designer-link"):
 
                             data = {
                                 'contact_seller': contact_seller,
@@ -107,11 +92,11 @@ def main(request):
                                 'item_image_url': item_image_url,
                                 'item_url': item_url,
                                 'location': location,
-                                'seller': seller,
-                                'shop': shop,
-                                'site': url,
+                                'seller': seller(subdivs),
+                                'shop': 'Teepublic',
+                                'site': url(),
                                 'status': True,
-                                'store_url': store_url,
+                                'store_url': store_url(subdivs),
                                 'note': ''
                             }
                             db.collection('illegalmerchandise').document().set(data)  # Add a new doc in collection links with ID shop
@@ -122,23 +107,68 @@ def main(request):
    
     return "All Done"
 
+def contact_seller(link):
+    contact_seller = ''
+    return contact_seller
+
+def getTitle(link):
+    """Attempt to get a title."""
+    title = ''
+    if link.title.string is not None:
+        title = link.title.string
+    elif link.find("h1") is not None:
+        title = link.find("h1")
+    return title
+
+def item_image_title(): 
+    item_image_title = ''
+    return item_image_title
+
+def item_image_url(): 
+    item_image_url = ''
+    return item_image_url
+
+def item_url(): 
+    item_url = ''
+    return item_url
+
+def location(): 
+    location = ''
+    return location
+
+def seller(subdivs): 
+    seller = ''
+    sellerdetail = subdivs.find("a")    
+    seller = sellerdetail.text
+    return seller
+
+def site(): 
+    url = ''
+    return url
+
+def store_url(subdivs):
+    store_url = ''
+    
+    sellerdetail = subdivs.find("a")    
+    store_url = sellerdetail['href']
+    store_url = convert(store_url)
+    return store_url
+
 def cleanurl(url):
-    if "?hash" not in url:
-        return baseurl + url
     matches = re.findall('(.+\?)([^#]*)(.*)', url)
     if len(matches) == 0:
-        return baseurl + url
+        return url
     match = matches[0]
     query = match[1]
-#    sanitized_query = '&'.join([p for p in query.split('&') if not p.startswith('?hash')])
-#    return match[0]+sanitized_query+match[2]
-    return baseurl + match[0]
+    return match[0]
 
-def convert(url):
+def convert(url, baseurl):
     if url.startswith('http://www.'):
         return 'http://' + url[len('http://www.'):]
+    if url.startswith('/'):
+        return 'https://' + baseurl + url
     if url.startswith('//www.'):
-        return 'https://www' + url[len('//www'):]
+        return 'https://www' + baseurl + url
     if url.startswith('//image.'):
         return 'https://' + url[len('//'):]
     if url.startswith('www.'):

@@ -3,13 +3,10 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from datetime import datetime
 import pytz
-import re
 import requests
 import urllib.request
 import socket
-import tldextract
 import json
-import OpenSSL._util
 
 from config import PROJECT
 
