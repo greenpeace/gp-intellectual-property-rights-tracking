@@ -14,3 +14,6 @@ gcloud functions deploy <cloud function name> --runtime python37 --set-env-vars 
 
 # You may have to alter the IAM if you can not gett the function to work
 gcloud functions add-iam-policy-binding <function name> --region=<region> --member=allUsers --role=roles/cloudfunctions.invoker
+
+# Requests-html library
+The AliExpress bot uses the requests-html library to deal with javascript websites. Running the render function the first time will install Chromium, an open source Chrome webdriver It searches tags on the webpage based on CSS selectors.
