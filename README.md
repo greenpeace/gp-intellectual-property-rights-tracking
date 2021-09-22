@@ -28,3 +28,13 @@ A Jupyter Notebook is provided for educational purposes.
 gcloud config configurations list
 
 gcloud config configurations activate [NAME]
+
+On command line set the Google variable GOOGLE_APPLICATION_CREDENTIALS by entering 
+
+    export GOOGLE_APPLICATION_CREDENTIALS="/Users/tzetterl/Documents/<service account>.json"
+
+To check that it is set
+
+    echo $GOOGLE_APPLICATION_CREDENTIALS
+
+

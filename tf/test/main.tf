@@ -12,17 +12,9 @@ data "google_client_config" "config-default" {
   provider = google.initial
 }
 
-#data "google_service_account_access_token" "default" {
-#  provider               = google.initial
-#  target_service_account = "terraform@${local.project}.iam.gserviceaccount.com"
-#  scopes                 = ["cloud-platform"]
-#  lifetime               = "300s"
-#}
-
 provider "google" {
   project      = local.project
   region       = "EU"
-  #access_token = data.google_service_account_access_token.default.access_token
 }
 
 module "artifacts" {
