@@ -62,7 +62,7 @@ data "archive_file" "source_ebay" {
 data "archive_file" "source_etsy" {
   type        = "zip"
   source_dir  = "${path.module}/../../gp-techlab-etsysearchbot/src"
-  output_path = "${path.module}/../../gp-techlab-etsysearch/src/build/${local.app_name}_etsy.zip"
+  output_path = "${path.module}/../../gp-techlab-etsysearchbot/src/build/${local.app_name}_etsy.zip"
   excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
 }
 

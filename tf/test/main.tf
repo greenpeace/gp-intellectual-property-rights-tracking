@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 0.13.0"
+
+  backend "gcs" {
+    bucket = "global-ipr-terraform-state"
+    # Structure:
+    # state/<application/<entity>/<environment>/
+    prefix = "state/ipr/test/"
+  }
+}
+
 locals {
   project     = "torbjorn-zetterlund"
   entity      = "extract"
