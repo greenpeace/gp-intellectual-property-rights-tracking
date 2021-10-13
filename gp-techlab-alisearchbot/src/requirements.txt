@@ -1,5 +1,4 @@
 firebase-admin
-beautifulsoup4
-requests
-html5lib
-lxml
+numpy
+pandas
+pyppeteer
