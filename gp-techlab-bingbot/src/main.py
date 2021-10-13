@@ -8,10 +8,15 @@ import urllib.request
 import socket
 import json
 
-from config import PROJECT
-
 import firebase_admin
 from firebase_admin import credentials, firestore
+
+# configure local or cloud
+try:
+    from config import PROJECT # only cloud
+except:
+    PROJECT = 'torbjorn-zetterlund' # only local
+    logging.basicConfig(filename='test.log', level=logging.INFO) # log only local
 
 # initialize firebase sdk
 CREDENTIALS = credentials.ApplicationDefault()
@@ -34,85 +39,106 @@ def main(request):
     for doc in searchquery_ref.where(u'active', u'==', True).stream():
         query = u'{}'.format(doc.to_dict()['queryterm'])
         query = urllib.parse.quote_plus(query)
-        print(query)
 
+        # start at the first search tab
         payload = { 'q' : query, 'first' : '11' }
         url = 'https://www.bing.com/search?'
-    
+
+        page_nr = 0 # a counter for page number
+        total = 0 # a counter for total links found per search term
+
         while url:
-            print(url)
+            counter = 0 # a counter for links per page
+
             page = requests.get(url, payload, headers=headers)
-            
+
             if page.status_code == 429:
                 logging.info('Exceeded Rate Limit: {}')
+
             soup = BeautifulSoup(page.text, 'html.parser')
 
-            urls4 = soup.find_all('li', { "class" : "b_algo" })
-            print(urls4)
+            for item in soup.findAll('li', { "class" : "b_algo" }):
+                link_href = item.find('cite').get_text()
+
+                docsurl = db.collection(u'searchlinks').where(u'url', u'==', link_href).stream()
+                
+                if not (len(list(docsurl))): # only continue if url does not exist in database yet
+
+                    # get the hostname
+                    urlname = urlparse(link_href).netloc
+
+                    try:
+                        ip = socket.gethostbyname(urlname)
+                        try:
+                            with urllib.request.urlopen("https://geolocation-db.com/jsonp/" + ip) as geourl:
+                                geodata = geourl.read().decode()
+                                geodata = geodata.split("(")[1].strip(")")
+                                #print(geodata)
+                                geodata = json.loads(geodata)
+                                country = geodata['country_code']
+                                geolat = geodata['latitude']
+                                geolong = geodata['longitude']
+                        except:
+                            country = "Not Found"
+                    except socket.error:
+                        ip = 'Not Found'
+                        country = 'Not Found'
+
+                    # parse the url to get the name of the shop/site
+                    shop = strip_url(link_href)
+
+                    data = {
+                        'title': 'title',
+                        'description': 'description',
+                        'shop': shop,
+                        'date': _now(), # datetime object containing current date and time
+                        'url': link_href,
+                        'country': country,
+                        'category': 'Bing Search',
+                        'search': query,
+                        'ip_address': ip,
+                        'status': True
+                    }
+                    db.collection('searchlinks').document().set(data)  # Add a new doc in collection links with ID shop 
+                    counter += 1 
             
-            for link in soup.findAll('li', { "class" : "b_algo" }):
-                link_href = link.get('href')
-
-                results = soup.findAll('li', { "class" : "b_algo" })
-                for result in results:
-                    if not "/?FORM=Z9FD1" in link_href:
-                        docsurl = db.collection(u'searchlinks').where(u'url', u'==', link.get('href').split("?q=")[1].split("&sa=U")[0]).stream()
-                        if (len(list(docsurl))):
-                            logging.info("URL Exist, we will ignore")
-                        else:
-                            logging.info("URL Not found, we will add to databse")
-                            
-                            # Create a query against the collection
-                            urllink = urlparse(link.get('href').split("?q=")[1].split("&sa=U")[0]).netloc
-                            
-                            # Find out what Country the IP address is from
-                            hostname = socket.gethostname()
-                            # get the hostname
-                            urlname = urlparse(urllink).netloc
-
-                            try:
-                                ip = socket.gethostbyname(urlname)
-                                try:
-                                    with urllib.request.urlopen("https://geolocation-db.com/jsonp/" + ip) as geourl:
-                                        geodata = geourl.read().decode()
-                                        geodata = geodata.split("(")[1].strip(")")
-                                        #print(geodata)
-                                        geodata = json.loads(geodata)
-                                        country = geodata['country_code']
-                                        geolat = geodata['latitude']
-                                        geolong = geodata['longitude']
-                                except:
-                                    country = "Not Found"
-                            except socket.error:
-                                ip = 'Not Found'
-                                country = 'Not Found'
-
-                            # parse the url to get the name of the shop/site
-                            urllink = urllink.split('.')[1]
-
-                            data = {
-                                'title': 'title',
-                                'description': 'description',
-                                'shop': urllink,
-                                'date': _now(), # datetime object containing current date and time
-                                'url': link.get('href').split("?q=")[1].split("&sa=U")[0],
-                                'country': country,
-                                'category': 'e-commerce',
-                                'search': query,
-                                'ip_address': ip,
-                                'status': True
-                            }
-                            db.collection('searchlinks').document().set(data)  # Add a new doc in collection links with ID shop
-
-                    else:
-                        logging.info('Search Completed: {}')            
+            logging.info(f"Added {counter} links for page {page_nr} of search term {query}")
+            
+            total += counter
+            page_nr += 1
+           
             # get next page url
-            url = soup.find('a', id='pnnext')
-            if url:
-                url = 'https://www.google.com/' + url['href'] + '&source=lnms&sa=X'
-            else:
-                logging.info('Search Completed: {}')
-    return "All Done"
+            result = soup.find('a', { "class" : "sb_pagN sb_pagN_bp b_widePag sb_bp" })
+            try:
+                url = result['href']
+                url = "https://www.bing.com" + url
+                payload = None
+
+            except:
+                logging.info(f'Search completed at page {page_nr-1}, added {total} links in total')
+                
+            if page_nr == 5:  # quit if 5 pages were searched        
+                break
+    return f"All Done, we added {total} links"
+
 def _now():
     return datetime.utcnow().replace(tzinfo=pytz.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
-    
+
+def strip_url(link):
+    if "https://www" in link:
+        shop = link.split('.')[1]
+    elif "https://" in link:
+        shop = link.split('.')[0]
+        shop = shop.split('//')[1]
+    else:
+        shop = link.split('.')[1]
+    return shop
+
+
+
+
+# call function, only needed locally
+try:
+    from config import PROJECT # only cloud
+except:
+    main('request')
