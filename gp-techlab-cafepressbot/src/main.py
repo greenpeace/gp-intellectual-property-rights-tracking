@@ -50,6 +50,7 @@ def main(request):
 
             # Regular Expression for a css class that ha dynamic values
             regex = re.compile('listing-item flex-item ptn-*')
+            
             # Get All links in the css class defined by regex
             products = soup.find_all("a", class_=regex)
             
@@ -99,11 +100,14 @@ def main(request):
                             'store_url': store_url,
                             'note': ''
                         }
+                        
                         db.collection('illegalmerchandise').document().set(data)  # Add a new doc in collection links with ID shop
                         counter += 1
-                        logging.info(f"We added {counter} links for search term {query}")
+                        
                     else:
-                        logging.info(f"No match on Keywords for title {item_image_title}")    # -> <match object>
+                        continue
+                    
+            logging.info(f"We added {counter} links for search term {query}")
             total += counter
         except:
             logging.info("Error Getting main product page")
