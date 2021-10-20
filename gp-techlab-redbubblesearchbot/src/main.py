@@ -2,11 +2,17 @@ import logging
 import requests
 from bs4 import BeautifulSoup
 import re
+import urllib
 
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-from config import PROJECT
+# configure local or cloud
+try:
+    from config import PROJECT # only cloud
+except:
+    PROJECT = 'torbjorn-zetterlund' # only local
+    logging.basicConfig(filename='test.log', level=logging.INFO) # log only local
 
 # initialize firebase sdk
 CREDENTIALS = credentials.ApplicationDefault()
@@ -24,39 +30,45 @@ def main(request):
 
     # Fake Real Browser
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'}
-
-    searchlink_ref = db.collection(u'searchlinks')
     
-    for doc in searchlink_ref.where(u'shop', u'==', 'redbubble').stream():
-        url = u'{}'.format(doc.to_dict()['url'])
-        shop = u'{}'.format(doc.to_dict()['shop'])
-        #        url = cleanurl(url)
-        print(url)
+    searchquery_ref = db.collection(u'searchquery')
+    
+    total = 0
+    
+    for doc in searchquery_ref.where(u'active', u'==', True).stream():
+        query = u'{}'.format(doc.to_dict()['queryterm'])
+        query = urllib.parse.quote_plus(query)
 
+        # start at the first search tab
+        url = 'https://www.redbubble.com/shop/?query=' + query
+
+        counter = 0
         try:
             page = requests.get(url, headers=headers)
 
             # Get web page
-            redbubble = BeautifulSoup(page.content, "html5lib")
+            soup = BeautifulSoup(page.content, "html.parser")
+
             # Regular Expression for a css class that ha dynamic values
-            regex = re.compile('styles__link--2sYi3')
+            regex = re.compile('styles__link--3QJ5N')
+            products = soup.find_all("a", class_=regex)
+
             # Get All links in the css class defined by regex
-            for divs in redbubble.find_all("a", class_=regex):
-                item_url = divs['href']
-                item_url = cleanurl(item_url)
+            for product in products:
+                
+                item_url = product['href']
+
                 # Duplicate check
                 docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).stream()
-                if (len(list(docsurl))):
-                    logging.info("URL Exist, we will ignore")
-                else:
-                    logging.info("URL Not found, we will add to databse")
+                if not (len(list(docsurl))):
 
-                    regeximg = re.compile('styles__box--206r9 styles__ratioInner--KvIFM')
-                    product_item = divs.find('div',  class_=regeximg)
-                    item_image_title = product_item.img['alt']
+                    regeximg = re.compile('styles__image--G1zaZ styles__productImage--3ZNPD*')
+                    item_image = product.find('img',  class_=regeximg)
+                    item_image_title = item_image['alt']
 
                     # Check if Keywords Exixst in Product title
-                    searchkeywords_ref = db.collection(u'searchquerykeywords')        
+                    searchkeywords_ref = db.collection(u'searchquerykeywords')   
+
                     # Request data from Firestore
                     for doc in searchkeywords_ref.where(u'active', u'==', True).stream():
                         keywords.append(u'{}'.format(doc.to_dict()['querykeywords']))
@@ -64,66 +76,69 @@ def main(request):
                     if any(x in item_image_title for x in keywords):
 
                         try:
-                            item_image_url = product_item.img['src']
+                            item_image_url = item_image['src']
                         except:
-                            item_image_url = product_item.img['src']
+                            item_image_url = ''
 
-                        # Get data from sub page
+                        # Get data from item page
                         subpage = requests.get(item_url, headers=headers)
+                        item_soup = BeautifulSoup(subpage.text, "html.parser")
+                        sellerdetail = item_soup.find("a", class_="ProductConfiguration__artistLink--wueCo")    
 
-                        redbubblesoup = BeautifulSoup(subpage.text, "html5lib")
+                        try:
+                            store_url = sellerdetail['href']
+                        except:
+                            store_url = ''
 
-                        for subdivs in redbubblesoup.find_all("div", class_="DesktopProductPage__config--3xaTv"):
+                        try:
+                            seller = sellerdetail.text
+                        except:
+                            seller = ''
 
-                            sellerdetail = subdivs.find("a")    
-                            #  for link in ebaysoup.find_all("a"):
-                            try:
-                                store_url = sellerdetail['href']
-                            except:
-                                store_url = ''
+                        # Get data from store page
+                        storepage = requests.get(store_url, headers=headers)
+                        store_soup = BeautifulSoup(storepage.text, "html.parser")
+                        regex = re.compile('styles__box--2Ufmy*')
+                        storedetail = store_soup.find("li", class_=regex) 
 
-                            #  for link in ebaysoup.find_all("a"):
-                            try:
-                                seller = sellerdetail.text
-                            except:
-                                seller = ''
-
-                            # Get data from shop page
-                            try:
-                                contact_seller = ''
-                            except:
-                                contact_seller = ''
-
-                            shop = 'Redbubble'
+                        try:
+                            location = storedetail.text
+                        except:
                             location = ''
 
-                            data = {
-                                'contact_seller': contact_seller,
-                                'item_image_title': item_image_title,
-                                'item_image_url': item_image_url,
-                                'item_url': item_url,
-                                'location': location,
-                                'seller': seller,
-                                'shop': shop,
-                                'site': url,
-                                'status': True,
-                                'store_url': store_url,
-                                'note': ''
-                            }
-                            db.collection('illegalmerchandise').document().set(data)  # Add a new doc in collection links with ID shop
-                    else:
-                        logging.info("No match on Keywords")    # -> <match object>
-        except:
-            logging.info("Error Getting main product page")
-   
-    return "All Done"
+                        shop = 'redbubble' 
+                        contact_seller = ''
 
-def cleanurl(url):
-    if "?hash" not in url:
-        return url
-    matches = re.findall('(.+\?)([^#]*)(.*)', url)
-    if len(matches) == 0:
-        return url
-    match = matches[0]
-    query = match[1]
-    return match[0]
+                        data = {
+                            'contact_seller': contact_seller,
+                            'item_image_title': item_image_title,
+                            'item_image_url': item_image_url,
+                            'item_url': item_url,
+                            'location': location,
+                            'seller': seller,
+                            'shop': shop,
+                            'site': url,
+                            'status': True,
+                            'store_url': store_url,
+                            'note': ''
+                        }
+                    
+                        db.collection('illegalmerchandise').document().set(data)  # Add a new doc in collection links with ID shop
+                        counter += 1
+                    
+                    else:
+                        continue
+            
+            logging.info(f"We added {counter} links for search term {query}")
+            total += counter
+        
+        except Exception as e:
+            logging.info(f"Error Getting main product page: {e}")
+   
+    return f"All Done, we added {total} links"
+
+# call function, only needed locally
+try:
+    from config import PROJECT # only cloud
+except:
+    main('request')
