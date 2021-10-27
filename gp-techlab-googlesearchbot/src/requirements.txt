@@ -4,3 +4,4 @@ requests
 pytz
 html5lib
 tldextract
+pyparsing==2.4.7
