@@ -1,0 +1,16 @@
+{
+  "name": "pupperteer-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=screenshot"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^1.9.0",
+    "puppeteer": "^10.4.0"
+  }
+}
