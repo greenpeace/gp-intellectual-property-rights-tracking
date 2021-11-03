@@ -2,11 +2,17 @@ import logging
 import requests
 from bs4 import BeautifulSoup
 import re
+import urllib
 
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-from config import PROJECT
+# configure local or cloud
+try:
+    from config import PROJECT # only cloud
+except:
+    PROJECT = 'torbjorn-zetterlund' # only local
+    logging.basicConfig(filename='test.log', level=logging.INFO) # log only local
 
 # initialize firebase sdk
 CREDENTIALS = credentials.ApplicationDefault()
@@ -17,37 +23,40 @@ firebase_admin.initialize_app(CREDENTIALS, {
 # get firestore client
 db = firestore.client()
 
-# Keyword Check
-keywords = []
-def main(link):
+keywords = [] 
+
+def main(request):
 
     # Fake Real Browser
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1)'}
+    headers = { 'User-agent' : 'Mozilla/11.0' }
 
-    results = 100 # valid options 10, 20, 30, 40, 50, and 100
-
-    searchlink_ref = db.collection(u'searchlinks')
+    searchquery_ref = db.collection(u'searchquery')
     
-    for doc in searchlink_ref.where(u'shop', u'==', 'etsy').stream():
-        url = u'{}'.format(doc.to_dict()['url'])
-        shop = u'{}'.format(doc.to_dict()['shop'])
-#        url = cleanurl(url)
-        print(url)
+    total = 0
+    
+    for doc in searchquery_ref.where(u'active', u'==', True).stream():
+        query = u'{}'.format(doc.to_dict()['queryterm'])
+        query = urllib.parse.quote_plus(query)
 
+        # start at the first search tab
+        url = 'https://www.etsy.com/ca/market/' + query
+
+        counter = 0
         try:
             page = requests.get(url, headers=headers)
 
             # Get web page
-            ebaysoup = BeautifulSoup(page.text, "html5lib")
+            soup = BeautifulSoup(page.content, "html.parser")
+            regex = re.compile('listing-link*')
 
-            regex = re.compile('block-grid-item *')
-            # Get All links in the css class defined by regex
-            for divs in ebaysoup.find_all("li", class_=regex):
+            products = soup.find_all("a", class_= regex)
+
+            # Get all links in the css class defined by regex
+            for product in products:
                
-                find_a = divs.find('a')
-                item_url = find_a['href']
-                item_url = cleanurl(item_url)
-                item_image_title = find_a['title']
+                item_url = product['href']
+                item_img = product.find("img")
+                item_image_title = item_img['alt']
             
                 # Check if Keywords Exixst in Product title
                 searchkeywords_ref = db.collection(u'searchquerykeywords')        
@@ -55,84 +64,84 @@ def main(link):
                 for doc in searchkeywords_ref.where(u'active', u'==', True).stream():
                     keywords.append(u'{}'.format(doc.to_dict()['querykeywords']))
 
-                # Check if Keywords Exixst in Product title
+                # Check if Keywords Exist in Product title
                 if any(x in item_image_title for x in keywords):
+                    
                     # Duplicate check
                     docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).stream()
-                    if (len(list(docsurl))):
-                        logging.info("URL Exist, we will ignore")
-                    else:
-                        logging.info("URL Not found, we will add to databse")
+                    
+                    if not (len(list(docsurl))):
 
-
-                        item_image_url = divs.find('img')
                         try:
-                            item_image_url = item_image_url['data-src']
+                            item_image_url = item_img['data-src']
                         except:
-                            item_image_url = item_image_url['src']
+                            item_image_url = item_img['src']
 
-                        # Get data from sub page
+                        # Get data on the seller from item page
                         subpage = requests.get(item_url, headers=headers)
 
-                        ebayitemsoup = BeautifulSoup(subpage.text, "html5lib")
+                        itemsoup = BeautifulSoup(subpage.text, "html.parser")
+                        
+                        sellerinfo = itemsoup.find("p", class_='wt-text-body-01 wt-mr-xs-1')
+                        sellerinfo = sellerinfo.find("a", class_='wt-text-link-no-underline')    
+                       
+                        try:
+                            store_url = sellerinfo['href']
+                        except:
+                            store_url = ''
+                        
+                        # Get data on the seller from seller page 
+                        sellerpage = requests.get(store_url, headers=headers)
+                        sellersoup = BeautifulSoup(sellerpage.text, "html.parser")
+                        sellerdetail = sellersoup.find("div", class_='shop-name-and-title-container wt-mb-xs-1')  
+                        sellerdetail = sellerdetail.find("h1")  
+                        
+                        try:
+                            seller = sellerdetail.text
+                        except:
+                            seller = ''
 
-                        regex = re.compile('wt-display-inline-flex-* *')
-                        # Get All links in the css class defined by regex
-                        for subdivs in ebayitemsoup.find_all("div", class_=regex):
+                        sellerdetail = sellersoup.find("div", class_='wt-display-flex-xs wt-text-truncate wt-align-items-center')
+                        sellerdetail = sellerdetail.find("span")
 
-                            sellerdetail = subdivs.find("a")    
-                            #  for link in ebaysoup.find_all("a"):
-                            try:
-                                store_url = sellerdetail['href']
-                            except:
-                                store_url = ''
-
-                            #  for link in ebaysoup.find_all("a"):
-                            try:
-                                seller = sellerdetail.span.text
-                            except:
-                                seller = ''
-
-                            # Strip White Space
-                            re.sub('\s+',' ',seller)
-
-                            # Get data from shop page
-                            try:
-                                contact_seller = subdivs.find('div', class_='si-pd-a').a['href']
-                            except:
-                                contact_seller = ''
-
-                            # Get data from shop page
-                            shop = 'Etsy'
+                        # Get data from shop page
+                        try:
+                            location = sellerdetail.text
+                        except:
                             location = ''
 
-                            data = {
-                                'contact_seller': contact_seller,
-                                'item_image_title': item_image_title,
-                                'item_image_url': item_image_url,
-                                'item_url': item_url,
-                                'location': location,
-                                'seller': seller,
-                                'shop': shop,
-                                'site': url,
-                                'status': True,
-                                'store_url': store_url,
-                                'note': ''
-                            }
-                            db.collection('illegalmerchandise').document().set(data)  # Add a new doc in collection links with ID shop
+                        # Get data from shop page
+                        shop = 'etsy'
+                        contact_seller = ''
+
+                        data = {
+                            'contact_seller': contact_seller,
+                            'item_image_title': item_image_title,
+                            'item_image_url': item_image_url,
+                            'item_url': item_url,
+                            'location': location,
+                            'seller': seller,
+                            'shop': shop,
+                            'site': url,
+                            'status': True,
+                            'store_url': store_url,
+                            'note': ''
+                        }
+                        db.collection('illegalmerchandise').document().set(data)  # Add a new doc in collection links with ID shop
+                        
+                        counter += 1
+                        logging.info(f"We added {counter} links for search term {query}")
                 else:
-                    logging.info("No match on Keywords")    # -> <match object>
+                    logging.info(f"No match on Keywords for title {item_image_title}") 
+            total += counter
         except:
             logging.info("Error Getting main product page")
    
-    return "All Done"
+    return f"All Done, we added {total} links"
 
-def cleanurl(url):
-    if "?hash" not in url:
-        return url
-    matches = re.findall('(.+\?)([^#]*)(.*)', url)
-    if len(matches) == 0:
-        return url
-    match = matches[0]
-    query = match[1]
-    return match[0]
+
+# call function, only needed locally
+try:
+    from config import PROJECT # only cloud
+except:
+    main('request')

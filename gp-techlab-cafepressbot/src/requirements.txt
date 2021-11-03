@@ -3,3 +3,4 @@ beautifulsoup4
 requests
 html5lib
 google-cloud-firestore
+pyparsing==2.4.7
