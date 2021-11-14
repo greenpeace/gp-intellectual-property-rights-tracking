@@ -25,6 +25,9 @@ variable "source_archive_bucket" {
   description = "GCS bucket containing function source"
 }
 
+variable "source_archive_object_selector" {
+  description = "Path and filename of function source in GCS bucket"
+}
 variable "source_archive_object_ali" {
   description = "Path and filename of function source in GCS bucket"
 }
