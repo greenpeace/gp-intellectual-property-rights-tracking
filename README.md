@@ -6,7 +6,7 @@ The Intellectual Property Rigths Tracking Bot is triggered by Cloud schedule, an
 The bots work as follows:
 - Cloud Scheduler triggers all different e-commerce bots (Ali, Etsy, etc)
 - The e-commerce bot loops over the search terms and searches on this specific e-commerce website. It places all results in the database, with Status = False
-- Then the e-commerce bot sends a message to PubSub saying that it added new items to the databases
+- Then the e-commerce bot sends a message to PubSub saying that it added new items to the database
 - Then the Selector bot wakes up, and check for all newly added items whether they fulfill our criteria: no duplicates, no vintage, keywords present in title
 - The Selector bot deletes the non-relevant links from the database and sets the Status of the relevant links to True
 
