@@ -1,6 +1,11 @@
 output "source_bucket" {
   value = google_storage_bucket.source.name
 }
+
+output "source_object_selector" {
+  value = google_storage_bucket_object.source_selector.name
+}
+
 output "source_object_ali" {
   value = google_storage_bucket_object.source_ali.name
 }
