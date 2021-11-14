@@ -1,5 +1,0 @@
-firebase-admin
-numpy
-pandas
-pyppeteer
-pyparsing==2.4.7

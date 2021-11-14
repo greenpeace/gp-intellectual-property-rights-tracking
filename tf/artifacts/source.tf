@@ -16,12 +16,18 @@ resource "google_storage_bucket" "source" {
     component = "source"
   }
 }
+data "archive_file" "source_selector" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../gp-selector/src"
+  output_path = "${path.module}/../../gp-selector/src/build/${local.app_name}_selector.zip"
+  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+}
 
 data "archive_file" "source_ali" {
   type        = "zip"
   source_dir  = "${path.module}/../../gp-techlab-alisearchbot/src"
   output_path = "${path.module}/../../gp-techlab-alisearchbot/src/build/${local.app_name}_ali.zip"
-  excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
+  excludes    = ["package-lock.json", "node_modules", "requirements-dev.txt", "build"]
 }
 
 data "archive_file" "source_amazon" {
@@ -94,6 +100,11 @@ data "archive_file" "source_teepublic" {
   excludes    = ["__pycache__", "Makefile", "requirements-dev.txt", "build"]
 }
 
+resource "google_storage_bucket_object" "source_selector" {
+  name   = "${local.app_name}-testing-${data.archive_file.source_selector.output_md5}_selector.zip"
+  bucket = google_storage_bucket.source.name
+  source = data.archive_file.source_selector.output_path
+}
 resource "google_storage_bucket_object" "source_ali" {
   name   = "${local.app_name}-testing-${data.archive_file.source_ali.output_md5}_ali.zip"
   bucket = google_storage_bucket.source.name
