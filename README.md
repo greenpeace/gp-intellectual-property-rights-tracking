@@ -2,12 +2,17 @@
 
 The Intellectual Property Rigths Tracking Bot is triggered by Cloud schedule, and will read the Firestore to get the search terms, search through the Google Serach Engine to find links based on the search term.
 
-# The solution in few words
-The bot will read a Firestore database to find the links to be used for scraping a webpage.
+# The solution 
+The bots work as follows:
+- Cloud Scheduler triggers all different e-commerce bots (Ali, Etsy, etc)
+- The e-commerce bot loops over the search terms and searches on this specific e-commerce website. It places all results in the database, with Status = False
+- Then the e-commerce bot sends a message to PubSub saying that it added new items to the database
+- Then the Selector bot wakes up, and check for all newly added items whether they fulfill our criteria: no duplicates, no vintage, keywords present in title
+- The Selector bot deletes the non-relevant links from the database and sets the Status of the relevant links to True
 
 # Creating the Cloud Function
 Go to the Cloud Functions page of the Google Cloud Platform Console. Create a new function and give it a name that is meaningful.
-
+s
 # How to deply
 Read the individual README.md file in the sub directory
 
@@ -22,9 +27,9 @@ User Manual - https://docs.google.com/document/d/1We8rM7G9D1rLSnaZh5aykOUoYivDtR
 
 https://colab.research.google.com/drive/1yDw8WsXj7E2x5Gn2880jLT871WjF3KDj?usp=sharing
 
-A Jupyter Notebook is provided for educational purposes.
+A Jupyter Notebook is provided for educational purposes.s
 
-# Checking Projects
+# Checking Projectss
 gcloud config configurations list
 
 gcloud config configurations activate [NAME]
