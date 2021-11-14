@@ -1,10 +1,8 @@
 # Aliexpress Bot
-
-The Aliexpress Bot is triggered by Cloud schedule, and will read the Firestore to get the search terms, search through the Google Serach Engine to find links based on the search term.
+The Aliexpress Bot is triggered by Cloud schedule, and will read the Firestore to get the search terms, search on Aliexpress and place all found items in the database. Then it triggers the selector bot with a pubsub message.
 
 ## The solution in few words
 The bot will read a Firestore database to find the links to be used for scraping a webpage.
-
 
 ## Creating the Cloud Function
 Go to the Cloud Functions page of the Google Cloud Platform Console. Create a new function and give it a name that is meaningful.
@@ -15,5 +13,5 @@ gcloud functions deploy <cloud function name> --runtime python37 --set-env-vars 
 ## You may have to alter the IAM if you can not get the function to work
 gcloud functions add-iam-policy-binding <function name> --region=<region> --member=allUsers --role=roles/cloudfunctions.invoker
 
-## Requests-html library
-The AliExpress bot uses the requests-html library to deal with javascript websites. Running the render function the first time will install Chromium, an open source Chrome webdriver It searches tags on the webpage based on CSS selectors.
+## Puppeteer library
+Puppeteer can scrape dynamic javascript websites.
