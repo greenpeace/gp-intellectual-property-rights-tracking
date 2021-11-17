@@ -4,3 +4,8 @@ venv/
 sphinx/
 **/*.pyc
 .vscode
+tf/test
+tf/.terraform
+tf/test/.terraform
+tf/test/tf.plan
+tf/test/.terraform*
