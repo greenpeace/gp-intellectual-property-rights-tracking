@@ -2,6 +2,7 @@ import logging
 import firebase_admin
 from firebase_admin import credentials, firestore
 import re
+import google.cloud.logging
 
 from config import PROJECT # only cloud
 
@@ -14,6 +15,10 @@ firebase_admin.initialize_app(CREDENTIALS, {
 
 # get firestore client
 db = firestore.client()
+
+# get logging client
+client = google.cloud.logging.Client()
+client.setup_logging()
 
 
 def main(event, context):
@@ -60,7 +65,7 @@ def main(event, context):
             db.collection(u'illegalmerchandise').document(item.id).delete()
             deleted += 1
     
-    logging.log(f"Added {added} items \nDeleted {deleted} items")
+    logging.info(f"Added {added} items \nDeleted {deleted} items")
     return f"Success"
 
 
