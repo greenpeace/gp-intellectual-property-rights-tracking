@@ -2,14 +2,14 @@ const puppeteer = require('puppeteer');
 const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
 const { getFirestore, Timestamp, FieldValue, WriteBatch } = require('firebase-admin/firestore');
 const {PubSub} = require('@google-cloud/pubsub');
-const serviceAccount = require('/home/ankebod/gp-intellectual-property-rights-tracking/torbjorn-zetterlund-e9d45e69e6a8.json');
+// const serviceAccount = require('/home/ankebod/gp-intellectual-property-rights-tracking/torbjorn-zetterlund-e9d45e69e6a8.json');
 
 
-initializeApp({
-  credential: cert(serviceAccount)
-});
+// initializeApp({
+//   credential: cert(serviceAccount)
+// });
 
-// initializeApp()
+initializeApp()
 
 const db = getFirestore();
 let browserPromise = puppeteer.launch({
@@ -78,7 +78,6 @@ exports.main = async (req, res) => {
                 // Store the results  
                 const merchDb = db.collection('illegalmerchandise');
                 for (const doc of results) {
-                    console.log(doc);
                     const docRef = await merchDb.add(doc);
                     await docRef.update({
                         timestamp: FieldValue.serverTimestamp()
@@ -129,7 +128,7 @@ async function pubMessage(topic){
     try {
         var topic = pubsub.topic(topic); 
     } catch {
-        var topic = await pubSub.createTopic(topic);
+        var topic = await pubsub.createTopic(topic);
     }
 
     const messageBuffer = Buffer.from(JSON.stringify({data: 'Run Selector'}));
