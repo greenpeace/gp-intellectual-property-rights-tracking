@@ -4,9 +4,9 @@ from firebase_admin import credentials, firestore
 import re
 import google.cloud.logging
 
-# from config import PROJECT # only cloud
+from config import PROJECT # only cloud
 
-PROJECT = 'torbjorn-zetterlund'
+# PROJECT = 'torbjorn-zetterlund'
 
 # initialize firebase sdk
 CREDENTIALS = credentials.ApplicationDefault()
@@ -26,12 +26,12 @@ def main(event, context):
     # Get newly added items
     new_items = db.collection(u'illegalmerchandise').where(u'status', u'==', False).stream()
     added, deleted = 0, 0
+    shop = new_items[0].to_dict()['item_url']
     
     for item in new_items:
 
         item_url = item.to_dict()['item_url']
         item_image_title = item.to_dict()['item_image_title']
-        logging.info(item_image_title)
 
         # Duplicate check
         docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).where(u'status', u'==', True).stream()
@@ -63,16 +63,14 @@ def main(event, context):
         # Delete record or set to active
         if duplicate == False and keywords == True and vintage == False:
             db.collection(u'illegalmerchandise').document(item.id).update({u'status': True})
-            logging.info('added')
             added += 1
         else:
             db.collection(u'illegalmerchandise').document(item.id).delete()
-            logging.info(f'duplicate: {duplicate}, keywords: {keywords}, vintage = {vintage} --> deleted')
             deleted += 1
     
-    logging.info(f"Added {added} items \nDeleted {deleted} items")
+    logging.info(f"Added {added} items \nDeleted {deleted} items for {shop}")
     return f"Success"
 
 
-main('request', 'context') # only local
+# main('request', 'context') # only local
 
