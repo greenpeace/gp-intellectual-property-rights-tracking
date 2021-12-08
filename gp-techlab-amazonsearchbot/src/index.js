@@ -72,6 +72,7 @@ exports.main = async (req, res) => {
                         timestamp: FieldValue.serverTimestamp()
                     })
                 }
+                console.log("We found " + results.length + " results")
 
             } catch(error) {
                 console.log(error);
@@ -116,7 +117,7 @@ async function pubMessage(topic){
     try {
         var topic = pubsub.topic(topic); 
     } catch {
-        var topic = await pubSub.createTopic(topic);
+        var topic = await pubub.createTopic(topic);
     }
 
     const messageBuffer = Buffer.from(JSON.stringify({data: 'Run Selector'}));
