@@ -59,7 +59,7 @@ exports.main = async (req, res) => {
                             site : base,
                             status : false,
                             store_url : storeList[i].getAttribute('href'),
-                            note : 'test'
+                            note : ''
                         }
                     }
                     return resultArray
@@ -72,6 +72,7 @@ exports.main = async (req, res) => {
                         timestamp: FieldValue.serverTimestamp()
                     })
                 }
+                console.log("We found " + results.length + " results")
 
             } catch {
                 console.log("No results for this query");
@@ -116,7 +117,7 @@ async function pubMessage(topic){
     try {
         var topic = pubsub.topic(topic); 
     } catch {
-        var topic = await pubSub.createTopic(topic);
+        var topic = await pubsub.createTopic(topic);
     }
 
     const messageBuffer = Buffer.from(JSON.stringify({data: 'Run Selector'}));
