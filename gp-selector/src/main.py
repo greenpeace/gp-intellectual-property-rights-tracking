@@ -26,10 +26,11 @@ def main(event, context):
     # Get newly added items
     new_items = db.collection(u'illegalmerchandise').where(u'status', u'==', False).stream()
     added, deleted = 0, 0
-    shop = new_items[0].to_dict()['item_url']
+    
     
     for item in new_items:
-
+        
+        shop = item.to_dict()['shop']
         item_url = item.to_dict()['item_url']
         item_image_title = item.to_dict()['item_image_title']
 
