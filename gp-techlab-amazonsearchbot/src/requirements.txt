@@ -1,5 +1,0 @@
-firebase-admin
-beautifulsoup4
-requests
-html5lib
-pyparsing==2.4.7

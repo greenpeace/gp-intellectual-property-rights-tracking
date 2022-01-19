@@ -5,10 +5,16 @@ The Intellectual Property Rigths Tracking Bot is triggered by Cloud schedule, an
 # The solution 
 The bots work as follows:
 - Cloud Scheduler triggers all different e-commerce bots (Ali, Etsy, etc)
-- The e-commerce bot loops over the search terms and searches on this specific e-commerce website. It places all results in the database, with Status = False
-- Then the e-commerce bot sends a message to PubSub saying that it added new items to the database
-- Then the Selector bot wakes up, and check for all newly added items whether they fulfill our criteria: no duplicates, no vintage, keywords present in title
-- The Selector bot deletes the non-relevant links from the database and sets the Status of the relevant links to True
+- We have Python and JavaScript e-commerce bots. The JavaScript bots can scrape websites that are in dynamic JavaScript.
+- The Python bots (cafepress, bingbot, redbubble, spreadshirt and teepublic) work as follows: 
+    - The e-commerce bot loops over the search terms and searches on this specific e-commerce website. 
+    - It selects the relevant products based on keywords an duplicates
+    - It places all results in the database, with Status = True
+- The JavaScript bots (ali, amazon and ebay) work as follows:
+    - The e-commerce bot loops over the search terms and searches on this specific e-commerce website. It places all results in the database, with Status = False
+    - Then the e-commerce bot sends a message to PubSub saying that it added new items to the database
+    - Then the Selector bot wakes up, and check for all newly added items whether they fulfill our criteria: no duplicates, no vintage, keywords present in title
+    - The Selector bot deletes the non-relevant links from the database and sets the Status of the relevant links to True
 
 # Creating the Cloud Function
 Go to the Cloud Functions page of the Google Cloud Platform Console. Create a new function and give it a name that is meaningful.

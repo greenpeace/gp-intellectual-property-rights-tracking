@@ -25,7 +25,7 @@ exports.main = async (req, res) => {
         
         for (const query of queryArray) {  
 
-            var url = 'https://www.aliexpress.com/w/wholesale-' + query + '.html'
+            var url = 'https://www.amazon.nl/s?k=' + query
             console.log(url);
             
             // Open a page
@@ -37,16 +37,15 @@ exports.main = async (req, res) => {
             await page.goto(url);
 
             try {
-                await page.waitForSelector('._1OUGS');
-
+                await page.waitForSelector('a.a-link-normal.a-text-normal');
+                
                 // Scrape the page
                 let results = await page.evaluate(() => {
-                    var base = 'https://www.aliexpress.com'
-                    var productList = document.querySelectorAll('a._9tla3');
-                    var imageList = document.querySelectorAll('img.A3Q1M');
-                    var storeList = document.querySelectorAll('a._2lsU7');
+                    var base = 'https://www.amazon.nl'
+                    var productList = document.querySelectorAll('h2.a-size-mini a.a-link-normal.a-text-normal');
+                    var imageList = document.querySelectorAll('img.s-image');
                     var resultArray = [];
-
+                    
                     for (var i = 0; i < productList.length; i++){
                         resultArray[i] = {
                             contact_seller : '',
@@ -54,16 +53,17 @@ exports.main = async (req, res) => {
                             item_image_url : imageList[i].getAttribute('src'),
                             item_url : base + productList[i].getAttribute('href'),
                             location : '',
-                            seller : storeList[i].innerHTML.trim(),
-                            shop : 'aliexpress',
+                            seller : '',
+                            shop : 'amazon',
                             site : base,
                             status : false,
-                            store_url : storeList[i].getAttribute('href'),
+                            store_url : '',
                             note : ''
                         }
                     }
                     return resultArray
                 })
+                
                 // Store the results  
                 const merchDb = db.collection('illegalmerchandise');
                 for (const doc of results) {
@@ -74,8 +74,8 @@ exports.main = async (req, res) => {
                 }
                 console.log("We found " + results.length + " results")
 
-            } catch {
-                console.log("No results for this query");
+            } catch(error) {
+                console.log(error);
             }  
             await context.close()
 
@@ -85,7 +85,7 @@ exports.main = async (req, res) => {
         await pubMessage("items-added")
 
         console.log("Success");
-        res.status(200).send('Great we found results and published a message');
+        res.status(200).send('Great, we found results and published a message');
         
     } catch(error) {
 
@@ -117,7 +117,7 @@ async function pubMessage(topic){
     try {
         var topic = pubsub.topic(topic); 
     } catch {
-        var topic = await pubsub.createTopic(topic);
+        var topic = await pubub.createTopic(topic);
     }
 
     const messageBuffer = Buffer.from(JSON.stringify({data: 'Run Selector'}));

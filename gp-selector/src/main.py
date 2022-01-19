@@ -2,9 +2,11 @@ import logging
 import firebase_admin
 from firebase_admin import credentials, firestore
 import re
+import google.cloud.logging
 
 from config import PROJECT # only cloud
 
+# PROJECT = 'torbjorn-zetterlund'
 
 # initialize firebase sdk
 CREDENTIALS = credentials.ApplicationDefault()
@@ -15,22 +17,29 @@ firebase_admin.initialize_app(CREDENTIALS, {
 # get firestore client
 db = firestore.client()
 
+# get logging client
+client = google.cloud.logging.Client()
+client.setup_logging()
+
 
 def main(event, context):
     # Get newly added items
     new_items = db.collection(u'illegalmerchandise').where(u'status', u'==', False).stream()
     added, deleted = 0, 0
     
+    
     for item in new_items:
+        
+        shop = item.to_dict()['shop']
         item_url = item.to_dict()['item_url']
         item_image_title = item.to_dict()['item_image_title']
 
         # Duplicate check
-        docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).stream()
-        docsname = db.collection(u'illegalmerchandise').where(u'item_image_title', u'==', item_image_title).stream()
+        docsurl = db.collection(u'illegalmerchandise').where(u'item_url', u'==', item_url).where(u'status', u'==', True).stream()
+        docsname = db.collection(u'illegalmerchandise').where(u'item_image_title', u'==', item_image_title).where(u'status', u'==', True).stream()
 
         if (len(list(docsurl))) or (len(list(docsname))):
-            duplicate = True
+            duplicate = False
         else:
             duplicate = False
             
@@ -54,15 +63,15 @@ def main(event, context):
 
         # Delete record or set to active
         if duplicate == False and keywords == True and vintage == False:
-            item.update({u'status': True})
+            db.collection(u'illegalmerchandise').document(item.id).update({u'status': True})
             added += 1
         else:
             db.collection(u'illegalmerchandise').document(item.id).delete()
             deleted += 1
     
-    logging.log(f"Added {added} items \nDeleted {deleted} items")
+    logging.info(f"Added {added} items \nDeleted {deleted} items for {shop}")
     return f"Success"
 
 
-# main('request') # only local
+# main('request', 'context') # only local
 
