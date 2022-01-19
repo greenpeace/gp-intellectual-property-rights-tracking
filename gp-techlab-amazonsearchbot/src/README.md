@@ -1,5 +1,5 @@
 # Amazon Bot
-The Amazon Bot is triggered by Cloud schedule, and will read the Firestore to get the search terms, search on Aliexpress and place all found items in the database. Then it triggers the selector bot with a pubsub message.
+The Amazon Bot is triggered by Cloud schedule, and will read the Firestore to get the search terms, search on Amazon and place all found items in the database. Then it triggers the selector bot with a pubsub message.
 
 ## The solution in few words
 The bot will read a Firestore database to find the links to be used for scraping a webpage.
