@@ -2,7 +2,7 @@
 
 locals {
   app_name = "gpiipr"
-  project  = "torbjorn-zetterlund"
+  project  = "techlab-coding-team"
 }
 
 provider "google" {

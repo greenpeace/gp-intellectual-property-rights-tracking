@@ -10,7 +10,7 @@ The bot will select the relevant links that were scraped by the e-commerce bots.
 Go to the Cloud Functions page of the Google Cloud Platform Console. Create a new function and give it a name that is meaningful.
 
 ## Deploy
-gcloud functions deploy <cloud function name> --runtime python37 --set-env-vars PROJECT_NAME=<gcp_project_name> --trigger-http --allow-unauthenticated --region=europe-west1 --memory=128MB
+gcloud functions deploy <cloud function name> --runtime python310 --set-env-vars PROJECT_NAME=<gcp_project_name> --trigger-http --allow-unauthenticated --region=europe-west1 --memory=128MB
 
 ## You may have to alter the IAM if you can not get the function to work
 gcloud functions add-iam-policy-binding <function name> --region=<region> --member=allUsers --role=roles/cloudfunctions.invoker

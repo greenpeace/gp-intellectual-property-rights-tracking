@@ -3,7 +3,7 @@ resource "google_cloudfunctions_function" "selector" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -55,7 +55,7 @@ resource "google_cloudfunctions_function" "amazon" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -78,7 +78,7 @@ resource "google_cloudfunctions_function" "cafepress" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -101,7 +101,7 @@ resource "google_cloudfunctions_function" "bing" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -124,7 +124,7 @@ resource "google_cloudfunctions_function" "duckduckgo" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -147,7 +147,7 @@ resource "google_cloudfunctions_function" "ebay" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -169,7 +169,7 @@ resource "google_cloudfunctions_function" "etsy" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -191,7 +191,7 @@ resource "google_cloudfunctions_function" "googlesearch" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -213,7 +213,7 @@ resource "google_cloudfunctions_function" "redbubble" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -235,7 +235,7 @@ resource "google_cloudfunctions_function" "spreadshirt" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 
@@ -257,7 +257,7 @@ resource "google_cloudfunctions_function" "teepublic" {
   project             = var.project
   region              = var.function_location
   entry_point         = "main"
-  runtime             = "python37"
+  runtime             = "python310"
   available_memory_mb = var.function_memory
   timeout             = var.function_timeout
 

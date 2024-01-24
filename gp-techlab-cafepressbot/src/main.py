@@ -11,7 +11,7 @@ from firebase_admin import credentials, firestore
 try:
     from config import PROJECT # only cloud
 except:
-    PROJECT = 'torbjorn-zetterlund' # only local
+    PROJECT = 'techlab-coding-team' # only local
     logging.basicConfig(filename='test.log', level=logging.INFO) # log only local
 
 # initialize firebase sdk

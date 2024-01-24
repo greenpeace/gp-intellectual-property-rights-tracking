@@ -8,7 +8,7 @@ variable "environment" {}
 variable "project" {}
 
 variable "function_location" {
-  default     = "us-central1"
+  default     = "europe-north1"
   description = "Location in which to execute cloud functions"
 }
 
@@ -71,7 +71,6 @@ variable "source_archive_object_spreadshirt" {
 variable "source_archive_object_teepublic" {
   description = "Path and filename of function source in GCS bucket"
 }
-
 
 # Cloud Scheduler ALI Express
 variable "cron_pattern_ali" {

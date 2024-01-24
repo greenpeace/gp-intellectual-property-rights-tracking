@@ -6,7 +6,7 @@ import google.cloud.logging
 
 from config import PROJECT # only cloud
 
-# PROJECT = 'torbjorn-zetterlund'
+# PROJECT = 'techlab-coding-team'
 
 # initialize firebase sdk
 CREDENTIALS = credentials.ApplicationDefault()
